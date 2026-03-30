@@ -253,7 +253,7 @@ if page == "📖 开始测试":
     else:
         # 如果已提交，显示切换开关
         view_mode = st.segmented_control(
-            "测试已完成，请选择视图：",
+            "请选择视图：",
             ["得分汇总", "答题解析详单"],
             default="得分汇总"
         )
@@ -278,78 +278,78 @@ if page == "📖 开始测试":
 
             # --- 视图 2：答题解析 (只读模式，对错自动折叠) ---
 
-            else:
+        else:
 
-                st.markdown("### 📝 答题解析详单")
+            st.markdown("### 📝 答题解析详单")
 
-                st.caption("提示：答对的题目已自动收起，答错的题目已为您自动展开解析。")
+            # st.caption("提示：答对的题目已自动收起，答错的题目已为您自动展开解析。")
 
-                for i, q in enumerate(questions):
+            for i, q in enumerate(questions):
 
-                    user_ans = st.session_state.user_answers_snapshot[i]
+                user_ans = st.session_state.user_answers_snapshot[i]
 
-                    correct_ans = q['options'][q['ans']]
+                correct_ans = q['options'][q['ans']]
 
-                    is_correct = (user_ans == correct_ans)
+                is_correct = (user_ans == correct_ans)
 
-                    # 动态设置标题标签
+                # 动态设置标题标签
 
-                    status_icon = "✅" if is_correct else "❌"
+                status_icon = "✅" if is_correct else "❌"
 
-                    label_text = f"{status_icon} 第 {i + 1} 题：{q['q'][:20]}..."
-
+                label_text = f"{status_icon} 第 {i + 1} 题：{q['q'][:20]}..."
                     # 核心逻辑：expanded=not is_correct (错题展开，对题收起)
 
-                    with st.expander(label_text, expanded=not is_correct):
+                with st.expander(label_text, expanded=not is_correct):
 
-                        st.markdown(f"#### **{q['q']}**")
+                    st.markdown(f"#### **{q['q']}**")
 
-                        # 媒体展示
+                    # 媒体展示
 
-                        c1, c2 = st.columns(2)
+                    c1, c2 = st.columns(2)
 
-                        with c1:
+                    with c1:
 
-                            try:
-                                st.image(q['img'], caption="波形图", width=300)
+                        try:
+                            st.image(q['img'], caption="波形图", width=300)
 
-                            except:
-                                st.warning("图片加载失败")
+                        except:
+                            st.warning("图片加载失败")
 
-                        with c2:
+                    with c2:
 
-                            try:
-                                st.audio(q['audio'])
+                        try:
+                            st.audio(q['audio'])
 
-                            except:
-                                st.warning("音频加载失败")
+                        except:
+                            st.warning("音频加载失败")
 
-                        # 结果对比
+                    # 结果对比
 
-                        res_col1, res_col2 = st.columns(2)
+                    res_col1, res_col2 = st.columns(2)
 
-                        with res_col1:
+                    with res_col1:
 
-                            st.write(f"**您的选择：** :{'green' if is_correct else 'red'}[{user_ans}]")
+                        st.write(f"**您的选择：** :{'green' if is_correct else 'red'}[{user_ans}]")
 
-                        with res_col2:
+                    with res_col2:
 
-                            st.write(f"**正确答案：** :green[{correct_ans}]")
+                        st.write(f"**正确答案：** :green[{correct_ans}]")
 
-                        # 解析内容
+                    # 解析内容
 
-                        st.info(f"**专家解析：** {q['analysis']}")
+                    st.info(f"**专家解析：** {q['analysis']}")
 
-                if st.button("🔄 重新开始测试"):
-                    # 重置所有状态
+            if st.button("🔄 重新开始测试"):
+                # 重置所有状态
 
-                    st.session_state.submitted = False
+                st.session_state.submitted = False
 
-                    st.session_state.current_q = 0
+                st.session_state.current_q = 0
 
-                    st.session_state.temp_answers = [None] * len(questions)
+                st.session_state.temp_answers = [None] * len(questions)
 
-                    st.rerun()
+                st.rerun()
+
 elif page == "📈 个人成绩统计":
     st.markdown(f"## **📊 {current_user} 的学习统计**")
 
