@@ -275,26 +275,81 @@ if page == "📖 开始测试":
                 st.session_state.temp_answers = [None] * len(questions)
                 st.rerun()
 
-        else:
-            st.markdown("### 📝 答题解析详单")
-            for i, q in enumerate(questions):
-                user_ans = st.session_state.user_answers_snapshot[i]
-                correct_ans = q['options'][q['ans']]
-                is_correct = user_ans == correct_ans
 
-                with st.container(border=True):
-                    st.markdown(f"**{q['q']}** {'✅' if is_correct else '❌'}")
-                    c1, c2 = st.columns(2)
-                    with c1: st.image(q['img'], width=250)
-                    with c2: st.audio(q['audio'])
+            # --- 视图 2：答题解析 (只读模式，对错自动折叠) ---
 
-                    st.write(f"**您的选择：** :{'green' if is_correct else 'red'}[{user_ans}]")
-                    st.write(f"**正确答案：** :green[{correct_ans}]")
-                    st.info(f"**解析：** {q['analysis']}")
+            else:
 
-            if st.button("⬅️ 返回得分汇总"):
-                st.rerun()
+                st.markdown("### 📝 答题解析详单")
 
+                st.caption("提示：答对的题目已自动收起，答错的题目已为您自动展开解析。")
+
+                for i, q in enumerate(questions):
+
+                    user_ans = st.session_state.user_answers_snapshot[i]
+
+                    correct_ans = q['options'][q['ans']]
+
+                    is_correct = (user_ans == correct_ans)
+
+                    # 动态设置标题标签
+
+                    status_icon = "✅" if is_correct else "❌"
+
+                    label_text = f"{status_icon} 第 {i + 1} 题：{q['q'][:20]}..."
+
+                    # 核心逻辑：expanded=not is_correct (错题展开，对题收起)
+
+                    with st.expander(label_text, expanded=not is_correct):
+
+                        st.markdown(f"#### **{q['q']}**")
+
+                        # 媒体展示
+
+                        c1, c2 = st.columns(2)
+
+                        with c1:
+
+                            try:
+                                st.image(q['img'], caption="波形图", width=300)
+
+                            except:
+                                st.warning("图片加载失败")
+
+                        with c2:
+
+                            try:
+                                st.audio(q['audio'])
+
+                            except:
+                                st.warning("音频加载失败")
+
+                        # 结果对比
+
+                        res_col1, res_col2 = st.columns(2)
+
+                        with res_col1:
+
+                            st.write(f"**您的选择：** :{'green' if is_correct else 'red'}[{user_ans}]")
+
+                        with res_col2:
+
+                            st.write(f"**正确答案：** :green[{correct_ans}]")
+
+                        # 解析内容
+
+                        st.info(f"**专家解析：** {q['analysis']}")
+
+                if st.button("🔄 重新开始测试"):
+                    # 重置所有状态
+
+                    st.session_state.submitted = False
+
+                    st.session_state.current_q = 0
+
+                    st.session_state.temp_answers = [None] * len(questions)
+
+                    st.rerun()
 elif page == "📈 个人成绩统计":
     st.markdown(f"## **📊 {current_user} 的学习统计**")
 
