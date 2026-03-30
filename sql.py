@@ -51,7 +51,7 @@ def save_score(user_id, score):
     cursor.execute("INSERT INTO scores (user_id, score) VALUES (?, ?)", (user_id, score))
     conn.commit()
     conn.close()
-
+# ABCD DBCA BCAD BDCA
 
 # --- 3. 题目数据 ---
 # 这里为了演示，我设置了简单的答案，你可以根据实际需求修改正确答案（0=A, 1=B, 2=C, 3=D）
@@ -165,91 +165,135 @@ user_map = {u['username']: u['id'] for u in users}
 current_user = st.sidebar.selectbox("选择当前用户", user_names)
 
 # --- 5. 页面逻辑 (开始测试部分) ---
+# --- 5. 页面逻辑 (开始测试部分 - 闯关模式) ---
 if page == "📖 开始测试":
     st.markdown(f"## **🎯 轴承诊断在线测试 - 考生：{current_user}**")
 
-    # 使用 Session State 记录是否已提交，以便提交后显示切换按钮
+    # 1. 初始化会话状态变量
+    if 'current_q' not in st.session_state:
+        st.session_state.current_q = 0  # 当前题号
+    if 'temp_answers' not in st.session_state:
+        st.session_state.temp_answers = [None] * len(questions)  # 暂存答案
     if 'submitted' not in st.session_state:
         st.session_state.submitted = False
-    if 'user_answers_snapshot' not in st.session_state:
-        st.session_state.user_answers_snapshot = []
 
-    # 如果已提交，显示切换开关
-    view_mode = "原始题目"
-    if st.session_state.submitted:
+    # --- 状态 A：答题中 ---
+    if not st.session_state.submitted:
+        q_idx = st.session_state.current_q
+        q = questions[q_idx]
+
+        # 显示进度条
+        progress = (q_idx) / len(questions)
+        st.progress(progress, text=f"进度：第 {q_idx + 1} / {len(questions)} 题")
+
+        # 容器化显示题目内容
+        with st.container(border=True):
+            st.markdown(f"### **{q['q']}**")
+
+            col_a, col_b = st.columns(2)
+            with col_a:
+                try:
+                    st.image(q['img'], caption="时域波形图", use_container_width=True)
+                except:
+                    st.warning("图片加载中...")
+            with col_b:
+                try:
+                    st.audio(q['audio'])
+                except:
+                    st.warning("音频加载中...")
+
+            # 选择框 (设置默认值为之前选过的，方便上下题切换)
+            ans = st.radio(
+                "请选择答案：",
+                q['options'],
+                index=q['options'].index(st.session_state.temp_answers[q_idx]) if st.session_state.temp_answers[
+                    q_idx] else None,
+                key=f"q_radio_{q_idx}"
+            )
+            st.session_state.temp_answers[q_idx] = ans
+
+        # 底部导航按钮
+        col_nav1, col_nav2, col_nav3 = st.columns([1, 1, 4])
+
+        with col_nav1:
+            if q_idx > 0:
+                if st.button("⬅️ 上一题"):
+                    st.session_state.current_q -= 1
+                    st.rerun()
+
+        with col_nav2:
+            if q_idx < len(questions) - 1:
+                if st.button("下一题 ➡️"):
+                    if st.session_state.temp_answers[q_idx] is None:
+                        st.error("请先选择一个答案")
+                    else:
+                        st.session_state.current_q += 1
+                        st.rerun()
+            else:
+                # 最后一题显示提交按钮
+                if st.button("✅ 完成并提交"):
+                    if st.session_state.temp_answers[q_idx] is None:
+                        st.error("请先选择最后一个答案")
+                    else:
+                        # 计算得分
+                        score = 0
+                        for i, user_ans in enumerate(st.session_state.temp_answers):
+                            if user_ans == questions[i]['options'][questions[i]['ans']]:
+                                score += (100 / len(questions))
+
+                        # 保存成绩
+                        save_score(user_map[current_user], score)
+                        st.session_state.submitted = True
+                        # 记录快照供解析使用
+                        st.session_state.user_answers_snapshot = st.session_state.temp_answers
+                        st.balloons()
+                        st.rerun()
+
+    # --- 状态 B：已完成测试 (显示结果与解析切换) ---
+    else:
+        # 如果已提交，显示切换开关
         view_mode = st.segmented_control(
-            "选择视图模式",
-            ["原始题目", "答题解析"],
-            default="答题解析"
+            "测试已完成，请选择视图：",
+            ["得分汇总", "答题解析详单"],
+            default="得分汇总"
         )
 
-    # --- 视图 1：原始题目 (表单模式) ---
-    if view_mode == "原始题目":
-        with st.form("quiz_form"):
-            temp_answers = []
+        if view_mode == "得分汇总":
+            # 重新计算一次分数显示
+            final_score = 0
+            for i, user_ans in enumerate(st.session_state.user_answers_snapshot):
+                if user_ans == questions[i]['options'][questions[i]['ans']]:
+                    final_score += (100 / len(questions))
+
+            st.success(f"## 🎊 恭喜！{current_user} 同学完成测试")
+            st.metric("最终得分", f"{final_score:.1f} 分")
+            st.info("您可以切换到“答题解析详单”查看每道题的错误详情。")
+
+            if st.button("🔄 重新开始测试"):
+                st.session_state.submitted = False
+                st.session_state.current_q = 0
+                st.session_state.temp_answers = [None] * len(questions)
+                st.rerun()
+
+        else:
+            st.markdown("### 📝 答题解析详单")
             for i, q in enumerate(questions):
-                st.markdown(f"#### **{q['q']}**")
+                user_ans = st.session_state.user_answers_snapshot[i]
+                correct_ans = q['options'][q['ans']]
+                is_correct = user_ans == correct_ans
 
-                col_a, col_b = st.columns(2)
-                with col_a:
-                    try:
-                        st.image(q['img'], caption="时域波形图", use_container_width=True)
-                    except:
-                        st.warning(f"等待上传图片: {q['img']}")
-                with col_b:
-                    try:
-                        st.audio(q['audio'])
-                    except:
-                        st.warning(f"等待上传音频: {q['audio']}")
+                with st.container(border=True):
+                    st.markdown(f"**{q['q']}** {'✅' if is_correct else '❌'}")
+                    c1, c2 = st.columns(2)
+                    with c1: st.image(q['img'], width=250)
+                    with c2: st.audio(q['audio'])
 
-                ans = st.radio(f"选择答案", q['options'], key=f"q_raw_{i}", label_visibility="collapsed")
-                temp_answers.append(ans)
-                st.divider()
+                    st.write(f"**您的选择：** :{'green' if is_correct else 'red'}[{user_ans}]")
+                    st.write(f"**正确答案：** :green[{correct_ans}]")
+                    st.info(f"**解析：** {q['analysis']}")
 
-            submit_button = st.form_submit_button("✅ 提交试卷")
-
-        if submit_button:
-            # 计算得分
-            score = 0
-            for i, ans in enumerate(temp_answers):
-                if ans == questions[i]['options'][questions[i]['ans']]:
-                    score += (100 / len(questions))
-
-            # 保存数据
-            save_score(user_map[current_user], score)
-            st.session_state.submitted = True
-            st.session_state.user_answers_snapshot = temp_answers  # 记录答案用于解析显示
-            st.balloons()
-            st.success(f"提交成功！得分：{score:.1f}。现在您可以切换到“答题解析”查看详情。")
-            st.rerun()  # 刷新以显示切换按钮
-
-    # --- 视图 2：答题解析 (只读模式，带题目内容) ---
-    else:
-        st.markdown("### 📝 答题解析详单")
-        for i, q in enumerate(questions):
-            user_ans = st.session_state.user_answers_snapshot[i]
-            correct_ans = q['options'][q['ans']]
-            is_correct = user_ans == correct_ans
-
-            # 使用带有颜色的容器
-            with st.container(border=True):
-                st.markdown(f"**{q['q']}** {'✅' if is_correct else '❌'}")
-
-                # 解析页面也要显示图片和音频
-                c1, c2 = st.columns(2)
-                with c1: st.image(q['img'], width=300)
-                with c2: st.audio(q['audio'])
-
-                # 显示对比
-                col_res1, col_res2 = st.columns(2)
-                col_res1.write(f"**您的选择：** :{'green' if is_correct else 'red'}[{user_ans}]")
-                col_res2.write(f"**正确答案：** :green[{correct_ans}]")
-
-                st.info(f"**解析：** {q['analysis']}")
-
-        if st.button("🔄 重新开始测试"):
-            st.session_state.submitted = False
-            st.rerun()
+            if st.button("⬅️ 返回得分汇总"):
+                st.rerun()
 
 elif page == "📈 个人成绩统计":
     st.markdown(f"## **📊 {current_user} 的学习统计**")
