@@ -164,7 +164,20 @@ user_names = [u['username'] for u in users]
 user_map = {u['username']: u['id'] for u in users}
 current_user = st.sidebar.selectbox("选择当前用户", user_names)
 
-# --- 5. 页面逻辑 (开始测试部分) ---
+# 或者使用更简单的 Markdown 链接（外观像普通文本链接）
+# st.sidebar.markdown("[🔗 点击打开：故障维修手册](xxxxxxxx)")
+# 2. 添加跳转到故障维修界面的按钮
+# 注意：这里假设你的 HTML 文件和 Python 脚本在同一个目录下
+# 3. 添加直接跳转到外部维修系统的链接按钮
+st.sidebar.subheader("🛠️ 外部辅助工具")
+st.sidebar.link_button(
+    "🚀 进入故障维修系统",
+    "https://zingy-raindrop-279dc3.netlify.app/",
+    use_container_width=True, # 按钮宽度撑满侧边栏
+    help="点击在新窗口中打开船舶轴承维修规划系统"
+)
+
+
 # --- 5. 页面逻辑 (开始测试部分 - 闯关模式) ---
 if page == "📖 开始测试":
     st.markdown(f"## **🎯 轴承诊断在线测试 - 考生：{current_user}**")
