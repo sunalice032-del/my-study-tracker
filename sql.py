@@ -154,6 +154,106 @@ questions = [
         "analysis": "波形平稳、声音无冲击，属于正常状态"}
 ]
 
+import streamlit as st
+
+# --- 1. 页面基本配置 ---
+st.set_page_config(page_title="轴承故障诊断练习系统", layout="wide", initial_sidebar_state="collapsed")
+
+# 自定义 CSS 让按钮变大并美化
+st.markdown("""
+    <style>
+    div.stButton > button {
+        width: 100%;
+        height: 200px;
+        font-size: 24px !important;
+        font-weight: bold;
+        border-radius: 15px;
+        border: 2px solid #4CAF50;
+        transition: all 0.3s;
+    }
+    div.stButton > button:hover {
+        background-color: #4CAF50;
+        color: white;
+        transform: scale(1.02);
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# --- 2. 初始化状态 ---
+if 'page' not in st.session_state:
+    st.session_state.page = 'main_menu'
+
+
+# 定义一个跳转函数
+def navigate_to(page_name):
+    st.session_state.page = page_name
+
+
+# --- 3. 逻辑分发 ---
+
+# A. 主菜单页面
+if st.session_state.page == 'main_menu':
+    st.title("🚢 轴承故障诊断练习系统")
+    st.write("---")
+
+    # 创建 2x2 布局
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("📖\n开始测试"):
+            navigate_to("开始测试")
+            st.rerun()
+
+    with col2:
+        if st.button("📈\n历史成绩"):
+            navigate_to("个人成绩统计")
+            st.rerun()
+
+    col3, col4 = st.columns(2)
+
+    with col3:
+        # 这里直接使用 link_button，因为它是外部跳转
+        st.link_button("🛠️\n故障维修", "https://你的GitHub用户名.github.io/你的仓库名/")
+
+    with col4:
+        if st.button("📊\n轴承诊断"):
+            navigate_to("轴承诊断")
+            st.rerun()
+
+# B. 功能页面内容
+else:
+    # 在功能页显示侧边栏，并提供一个返回主菜单的按钮
+    st.sidebar.title("🧭 导航菜单")
+    if st.sidebar.button("🏠 返回主页菜单"):
+        navigate_to("main_menu")
+        st.rerun()
+
+    st.sidebar.markdown("---")
+
+    # 侧边栏仍然保留切换功能
+    current_page = st.sidebar.radio("快速切换",
+                                    ["开始测试", "个人成绩统计", "轴承诊断"],
+                                    index=["开始测试", "个人成绩统计", "轴承诊断"].index(st.session_state.page))
+
+    # 同步侧边栏选择到状态
+    if current_page != st.session_state.page:
+        st.session_state.page = current_page
+        st.rerun()
+
+    # 根据状态渲染具体的页面内容
+    if st.session_state.page == "开始测试":
+        st.header("📖 轴承故障诊断测试")
+        # 插入你的测试逻辑代码...
+
+    elif st.session_state.page == "个人成绩统计":
+        st.header("📈 个人成绩统计")
+        # 插入你的成绩统计代码...
+
+    elif st.session_state.page == "轴承诊断":
+        st.header("📊 轴承诊断分析")
+        st.write("这里是轴承诊断的具体功能模块内容。")
+        
+        
 # --- 4. 侧边栏导航 ---
 st.set_page_config(page_title="轴承故障诊断练习系统", layout="wide")
 st.sidebar.title("🧭 导航菜单")
@@ -164,11 +264,6 @@ user_names = [u['username'] for u in users]
 user_map = {u['username']: u['id'] for u in users}
 current_user = st.sidebar.selectbox("选择当前用户", user_names)
 
-# 或者使用更简单的 Markdown 链接（外观像普通文本链接）
-# st.sidebar.markdown("[🔗 点击打开：故障维修手册](xxxxxxxx)")
-# 2. 添加跳转到故障维修界面的按钮
-# 注意：这里假设你的 HTML 文件和 Python 脚本在同一个目录下
-# 3. 添加直接跳转到外部维修系统的链接按钮
 st.sidebar.subheader("🛠️ 外部辅助工具")
 st.sidebar.link_button(
     "🚀 进入故障维修系统",
