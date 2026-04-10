@@ -34,6 +34,81 @@ init_db()
 
 
 # --- 2. 辅助函数 ---
+# import streamlit as st
+# import base64
+#
+# # --- 背景渲染函数 ---
+# def set_background(main_bg, sidebar_bg):
+#     '''
+#     main_bg: 主页面背景图路径
+#     sidebar_bg: 侧边栏背景图路径
+#     '''
+#     style = f"""
+#     <style>
+#     /* 主页面背景 */
+#     .stApp {{
+#         background: url("{main_bg}");
+#         background-size: cover;
+#         background-repeat: no-repeat;
+#         background-attachment: fixed;
+#     }}
+#
+#     /* 侧边栏背景 */
+#     [data-testid="stSidebar"] {{
+#         background: url("{sidebar_bg}");
+#         background-size: cover;
+#         background-repeat: no-repeat;
+#     }}
+#
+#     /* 为了让文字更清晰，给内容容器加一个半透明微光效果（可选） */
+#     .stMainViewBlockContainer {{
+#         background-color: rgba(255, 255, 255, 0.7);
+#         border-radius: 15px;
+#         padding: 2rem;
+#         margin-top: 2rem;
+#     }}
+#     </style>
+#     """
+#     st.markdown(style, unsafe_allow_html=True)
+#
+# # --- 调用渲染 ---
+# # 如果是本地文件，建议转换成 Base64 格式防止加载失败
+# # 这里演示直接传入路径或 URL
+# import base64
+#
+# def set_background(main_bg_path, sidebar_bg_path):
+#     def to_base64(path):
+#         with open(path, "rb") as f:
+#             return base64.b64encode(f.read()).decode()
+#
+#     main_b64 = to_base64(main_bg_path)
+#     sidebar_b64 = to_base64(sidebar_bg_path)
+#
+#     style = f"""
+#     <style>
+#     .stApp {{
+#         background: url("data:image/png;base64,{main_b64}");
+#         background-size: cover;
+#         background-repeat: no-repeat;
+#         background-attachment: fixed;
+#     }}
+#     [data-testid="stSidebar"] {{
+#         background: url("data:image/png;base64,{sidebar_b64}");
+#         background-size: cover;
+#         background-repeat: no-repeat;
+#     }}
+#     .stMainViewBlockContainer {{
+#         background-color: rgba(255, 255, 255, 0.7);
+#         border-radius: 15px;
+#         padding: 2rem;
+#         margin-top: 2rem;
+#     }}
+#     </style>
+#     """
+#     st.markdown(style, unsafe_allow_html=True)
+#
+# # Call with local file paths
+# set_background("bg_main.png", "bg_sidebar.png")
 def get_all_users():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -232,6 +307,7 @@ current_user = st.sidebar.selectbox("选择当前用户", user_names)
 # A. 主菜单页面
 if st.session_state.page == 'main_menu':
     # CSS injected only when on main menu
+    # set_background("bg_main.png", "bg_sidebar.png")
     st.markdown("""
     <style>
     div[data-testid="stButton"] > button,
@@ -279,6 +355,7 @@ if st.session_state.page == 'main_menu':
 # B. 功能页面内容
 else:
     # 在功能页显示侧边栏，并提供一个返回主菜单的按钮
+    # set_background("bg_main.png", "bg_sidebar.png")
     st.sidebar.title("🧭 导航菜单")
     if st.sidebar.button("🏠 返回主页菜单"):
         navigate_to("main_menu")
@@ -650,7 +727,67 @@ else:
 
     elif st.session_state.page == "轴承诊断":
         st.header("📊 轴承诊断分析")
-        st.write("这里是轴承诊断的具体功能模块内容。")
+
+        # --- 1. 初始化图片数据和状态 ---
+        # 定义图片列表（确保这些文件在你的 GitHub 仓库根目录或指定目录下）
+        diag_images = [
+            {"file": "nor.jpg", "caption": "正常状态时域波形"},
+            {"file": "in.jpg", "caption": "内圈故障典型冲击"},
+            {"file": "out.jpg", "caption": "外圈故障强周期性冲击"},
+            {"file": "zong.jpg", "caption": "滚动体故障随机冲击"}
+        ]
+
+        # 在 session_state 中初始化当前图片的索引（如果不存在）
+        if 'diag_img_idx' not in st.session_state:
+            st.session_state.diag_img_idx = 0
+
+        # --- 2. 展示当前图片 ---
+        current_img = diag_images[st.session_state.diag_img_idx]
+
+        # 创建一个容器，让图片和按钮紧凑显示
+        with st.container(border=True):
+            st.markdown(f"##### 当前展示：{current_img['caption']}")
+
+            # 尝试加载图片，增加异常处理防止因缺少文件导致页面崩溃
+            try:
+                # use_container_width=True 让图片自适应容器宽度
+                st.image(current_img['file'], caption=f"（{st.session_state.diag_img_idx + 1} / {len(diag_images)}）",
+                         use_container_width=True)
+            except FileNotFoundError:
+                st.error(f"（🚨 错误：未找到图片文件 {current_img['file']}，请检查 GitHub 仓库）")
+            except Exception as e:
+                st.error(f"（🚨 无法加载图片: {e}）")
+
+            st.divider()  # 添加分割线
+
+            # --- 3. 创建交互按钮 (左下/右下) ---
+            # 使用 columns 将按钮放置在两头
+            # [1, 4, 1] 的比例让中间留空，按钮分别靠左和靠右
+            col_prev, col_spacer, col_next = st.columns([1, 4, 1])
+
+            with col_prev:
+                # "上一张"按钮：仅在索引 > 0 时启用
+                if st.button("上一张", use_container_width=True, disabled=(st.session_state.diag_img_idx == 0)):
+                    st.session_state.diag_img_idx -= 1
+                    st.rerun()  # 重新渲染页面以更新图片
+
+            with col_next:
+                # "下一张"按钮：仅在索引 < 最大值时启用
+                if st.button("下一张", use_container_width=True,
+                             disabled=(st.session_state.diag_img_idx == len(diag_images) - 1)):
+                    st.session_state.diag_img_idx += 1
+                    st.rerun()  # 重新渲染页面以更新图片
+
+        # --- 可选：添加文字分析描述 ---
+        # st.markdown("---")
+        # # st.markdown("#### 💡 诊断要点总结")
+        # st.info("""
+        #     - **正常 (nor.jpg)**：波形平稳，无明显尖峰冲击。
+        #     - **内圈 (in.jpg)**：出现高频、高幅值的周期性冲击脉冲。
+        #     - **外圈 (out.jpg)**：冲击脉冲呈现强烈的低频周期性。
+        #     - **滚动体 (zong.jpg)**：冲击脉冲无明显周期，呈现随机性。
+        #     """)
+
 
 
 # # --- 4. 侧边栏导航 ---
