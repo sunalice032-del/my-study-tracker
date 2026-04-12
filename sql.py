@@ -33,82 +33,6 @@ def init_db():
 init_db()
 
 
-# --- 2. 辅助函数 ---
-# import streamlit as st
-# import base64
-#
-# # --- 背景渲染函数 ---
-# def set_background(main_bg, sidebar_bg):
-#     '''
-#     main_bg: 主页面背景图路径
-#     sidebar_bg: 侧边栏背景图路径
-#     '''
-#     style = f"""
-#     <style>
-#     /* 主页面背景 */
-#     .stApp {{
-#         background: url("{main_bg}");
-#         background-size: cover;
-#         background-repeat: no-repeat;
-#         background-attachment: fixed;
-#     }}
-#
-#     /* 侧边栏背景 */
-#     [data-testid="stSidebar"] {{
-#         background: url("{sidebar_bg}");
-#         background-size: cover;
-#         background-repeat: no-repeat;
-#     }}
-#
-#     /* 为了让文字更清晰，给内容容器加一个半透明微光效果（可选） */
-#     .stMainViewBlockContainer {{
-#         background-color: rgba(255, 255, 255, 0.7);
-#         border-radius: 15px;
-#         padding: 2rem;
-#         margin-top: 2rem;
-#     }}
-#     </style>
-#     """
-#     st.markdown(style, unsafe_allow_html=True)
-#
-# # --- 调用渲染 ---
-# # 如果是本地文件，建议转换成 Base64 格式防止加载失败
-# # 这里演示直接传入路径或 URL
-# import base64
-#
-# def set_background(main_bg_path, sidebar_bg_path):
-#     def to_base64(path):
-#         with open(path, "rb") as f:
-#             return base64.b64encode(f.read()).decode()
-#
-#     main_b64 = to_base64(main_bg_path)
-#     sidebar_b64 = to_base64(sidebar_bg_path)
-#
-#     style = f"""
-#     <style>
-#     .stApp {{
-#         background: url("data:image/png;base64,{main_b64}");
-#         background-size: cover;
-#         background-repeat: no-repeat;
-#         background-attachment: fixed;
-#     }}
-#     [data-testid="stSidebar"] {{
-#         background: url("data:image/png;base64,{sidebar_b64}");
-#         background-size: cover;
-#         background-repeat: no-repeat;
-#     }}
-#     .stMainViewBlockContainer {{
-#         background-color: rgba(255, 255, 255, 0.7);
-#         border-radius: 15px;
-#         padding: 2rem;
-#         margin-top: 2rem;
-#     }}
-#     </style>
-#     """
-#     st.markdown(style, unsafe_allow_html=True)
-#
-# # Call with local file paths
-# set_background("bg_main.png", "bg_sidebar.png")
 def get_all_users():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -126,8 +50,6 @@ def save_score(user_id, score):
     conn.close()
 # ABCD DBCA BCAD BDCA
 
-# --- 3. 题目数据 ---
-# 这里为了演示，我设置了简单的答案，你可以根据实际需求修改正确答案（0=A, 1=B, 2=C, 3=D）
 questions = [
     {"q": "第 1 题：请听音频并观察波形图，判断轴承当前状态",
         "options": ["正常", "内圈故障", "外圈故障", "滚动体故障"],
@@ -306,8 +228,6 @@ current_user = st.sidebar.selectbox("选择当前用户", user_names)
 
 # A. 主菜单页面
 if st.session_state.page == 'main_menu':
-    # CSS injected only when on main menu
-    # set_background("bg_main.png", "bg_sidebar.png")
     st.markdown("""
     <style>
     div[data-testid="stButton"] > button,
@@ -346,16 +266,14 @@ if st.session_state.page == 'main_menu':
             st.rerun()
     col3, col4 = st.columns(2)
     with col3:
-        st.link_button("🛠️\n故障维修", "https://zingy-raindrop-279dc3.netlify.app/")
+        st.link_button("🛠️\n故障维修", "https://fighting-for.github.io/-/")
     with col4:
         if st.button("📊\n轴承诊断"):
             navigate_to("轴承诊断");
             st.rerun()
 
-# B. 功能页面内容
+
 else:
-    # 在功能页显示侧边栏，并提供一个返回主菜单的按钮
-    # set_background("bg_main.png", "bg_sidebar.png")
     st.sidebar.title("🧭 导航菜单")
     if st.sidebar.button("🏠 返回主页菜单"):
         navigate_to("main_menu")
@@ -365,11 +283,10 @@ else:
 
     menu_options = ["开始测试", "个人成绩统计", "班级总体概况", "故障维修", "轴承诊断"]
 
-    # 容错处理：确保 index 始终有效
     try:
         default_idx = menu_options.index(st.session_state.page)
     except ValueError:
-        default_idx = 0  # 如果找不到（比如特殊状态），默认跳回第一个
+        default_idx = 0
 
     current_page = st.sidebar.radio(
         "快速切换",
@@ -378,13 +295,12 @@ else:
     )
     # 同步侧边栏选择到状态
     if current_page == "故障维修":
-        st.sidebar.link_button("🛠️ 打开故障维修页面", "https://zingy-raindrop-279dc3.netlify.app/")
+        st.sidebar.link_button("🛠️ 打开故障维修页面", "https://fighting-for.github.io/-/")
     elif current_page != st.session_state.page:
         st.session_state.page = current_page
         st.rerun()
 
     if st.session_state.page in ["个人成绩统计", "班级总体概况"]:
-        # 如果当前在“成绩”大类下，侧边栏显示两个子选项
         sub_page = st.sidebar.radio(
             "成绩单切换",
             ["个人成绩统计", "班级总体概况"],
@@ -468,8 +384,6 @@ else:
                 st.divider()
 
                 # 2. 模拟每题正确率统计
-                # 注意：真实环境下需要建立一张“答题明细表”来存每一题的对错。
-                # 这里我们根据平均分和题目难度，演示如何生成一个“题目正确率”柱状图。
                 st.write("### 📝 各题正确率统计")
 
                 # 构造演示数据（实际开发建议增加答题明细表）
@@ -530,8 +444,6 @@ else:
             st.session_state.temp_answers = [None] * len(questions)  # 暂存答案
         if 'submitted' not in st.session_state:
             st.session_state.submitted = False
-
-        # ✨ 新增：初始化用于控制显示答案的状态变量 ✨
         if 'show_answer' not in st.session_state:
             st.session_state.show_answer = False
         if 'last_q' not in st.session_state:
@@ -542,7 +454,6 @@ else:
             q_idx = st.session_state.current_q
             q = questions[q_idx]
 
-            # ✨ 新增：监听题目切换，自动隐藏上一题的答案 ✨
             if st.session_state.last_q != q_idx:
                 st.session_state.show_answer = False
                 st.session_state.last_q = q_idx
@@ -567,13 +478,9 @@ else:
                 except:
                     st.warning("音频加载中...")
 
-                # ✨ 修改：使用列布局，将选项和按钮放在同一行 ✨
-                # [6, 1, 2] 比例：选项占大部分，中间留白，右侧放按钮
                 col_ans1, col_spacer, col_ans2 = st.columns([6, 1, 2])
 
                 with col_ans1:
-                    # 选择框 (设置默认值为之前选过的，方便上下题切换)
-                    # Radio options — no column split needed
                     ans = st.radio(
                         "请选择答案：",
                         q['options'],
@@ -619,17 +526,11 @@ else:
 
             with col_nav1:
                 if q_idx > 0:
-                    # 定义样式库 (如果之前没定义)
-                    # st.markdown('<div class="small-btn">', unsafe_allow_html=True)
                     if st.button("⬅️ 上一题", key="prev_q"):
                         st.session_state.current_q -= 1
-                        # st.session_state.show_answer = False # 这里不需要了，上面有自动监听
                         st.rerun()
-                    # st.markdown('</div>', unsafe_allow_html=True)
 
             with col_nav2:
-                # 定义样式库
-                # st.markdown('<div class="mid-btn">', unsafe_allow_html=True)
                 if q_idx < len(questions) - 1:
                     if st.button("下一题 ➡️", key="next_q"):
                         if st.session_state.temp_answers[q_idx] is None:
@@ -638,7 +539,6 @@ else:
                             st.session_state.current_q += 1
                             st.rerun()
                 else:
-                    # 最后一题显示提交按钮
                     if st.button("✅ 完成并提交", key="submit_q"):
                         if st.session_state.temp_answers[q_idx] is None:
                             st.error("请先选择最后一个答案")
@@ -657,9 +557,7 @@ else:
                             st.session_state.user_answers_snapshot = st.session_state.temp_answers
                             st.balloons()
                             st.rerun()
-                # st.markdown('</div>', unsafe_allow_html=True)
 
-        # --- 状态 B：已完成测试 (显示结果与解析切换) ---
         else:
             # 如果已提交，显示切换开关
             view_mode = st.segmented_control(
@@ -687,7 +585,6 @@ else:
                 # --- 视图 2：答题解析 (只读模式，对错自动折叠) ---
             else:
                 st.markdown("### 📝 答题解析详单")
-                # st.caption("提示：答对的题目已自动收起，答错的题目已为您自动展开解析。")
                 for i, q in enumerate(questions):
                     user_ans = st.session_state.user_answers_snapshot[i]
                     correct_ans = q['options'][q['ans']]
@@ -695,7 +592,6 @@ else:
                     # 动态设置标题标签
                     status_icon = "✅" if is_correct else "❌"
                     label_text = f"{status_icon} {q['q'][:20]}..."
-                    # 核心逻辑：expanded=not is_correct (错题展开，对题收起)
                     with st.expander(label_text, expanded=not is_correct):
                         st.markdown(f"#### **{q['q']}**")
                         # 媒体展示
@@ -727,9 +623,6 @@ else:
 
     elif st.session_state.page == "轴承诊断":
         st.header("📊 轴承诊断分析")
-
-        # --- 1. 初始化图片数据和状态 ---
-        # 定义图片列表（确保这些文件在你的 GitHub 仓库根目录或指定目录下）
         diag_images = [
             {"file": "nor.jpg", "caption": "正常状态时域波形"},
             {"file": "in.jpg", "caption": "内圈故障典型冲击"},
@@ -737,20 +630,15 @@ else:
             {"file": "zong.jpg", "caption": "滚动体故障随机冲击"}
         ]
 
-        # 在 session_state 中初始化当前图片的索引（如果不存在）
         if 'diag_img_idx' not in st.session_state:
             st.session_state.diag_img_idx = 0
 
-        # --- 2. 展示当前图片 ---
         current_img = diag_images[st.session_state.diag_img_idx]
 
-        # 创建一个容器，让图片和按钮紧凑显示
         with st.container(border=True):
             st.markdown(f"##### 当前展示：{current_img['caption']}")
 
-            # 尝试加载图片，增加异常处理防止因缺少文件导致页面崩溃
             try:
-                # use_container_width=True 让图片自适应容器宽度
                 st.image(current_img['file'], caption=f"（{st.session_state.diag_img_idx + 1} / {len(diag_images)}）",
                          use_container_width=True)
             except FileNotFoundError:
@@ -758,40 +646,17 @@ else:
             except Exception as e:
                 st.error(f"（🚨 无法加载图片: {e}）")
 
-            st.divider()  # 添加分割线
+            st.divider()
 
-            # --- 3. 创建交互按钮 (左下/右下) ---
-            # 使用 columns 将按钮放置在两头
-            # [1, 4, 1] 的比例让中间留空，按钮分别靠左和靠右
             col_prev, col_spacer, col_next = st.columns([1, 4, 1])
 
             with col_prev:
-                # "上一张"按钮：仅在索引 > 0 时启用
                 if st.button("上一张", use_container_width=True, disabled=(st.session_state.diag_img_idx == 0)):
                     st.session_state.diag_img_idx -= 1
-                    st.rerun()  # 重新渲染页面以更新图片
+                    st.rerun()
 
             with col_next:
-                # "下一张"按钮：仅在索引 < 最大值时启用
                 if st.button("下一张", use_container_width=True,
                              disabled=(st.session_state.diag_img_idx == len(diag_images) - 1)):
                     st.session_state.diag_img_idx += 1
-                    st.rerun()  # 重新渲染页面以更新图片
-
-        # --- 可选：添加文字分析描述 ---
-        # st.markdown("---")
-        # # st.markdown("#### 💡 诊断要点总结")
-        # st.info("""
-        #     - **正常 (nor.jpg)**：波形平稳，无明显尖峰冲击。
-        #     - **内圈 (in.jpg)**：出现高频、高幅值的周期性冲击脉冲。
-        #     - **外圈 (out.jpg)**：冲击脉冲呈现强烈的低频周期性。
-        #     - **滚动体 (zong.jpg)**：冲击脉冲无明显周期，呈现随机性。
-        #     """)
-
-
-
-# # --- 4. 侧边栏导航 ---
-# st.set_page_config(page_title="轴承故障诊断练习系统", layout="wide")
-# st.sidebar.title("🧭 导航菜单")
-# page = st.sidebar.radio("请选择功能", ["📖 开始测试", "📈 个人成绩统计", "📊 班级总体概况"])
-#
+                    st.rerun()
