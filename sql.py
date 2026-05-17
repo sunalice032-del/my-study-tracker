@@ -2,6 +2,8 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 import matplotlib.pyplot as plt
+import random
+import datetime
 
 # 解决显示问题
 plt.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Arial', 'sans-serif']
@@ -36,6 +38,30 @@ def init_db():
         cursor.execute("INSERT INTO users (username, role) VALUES (?, ?)", ("Olivia", "Researcher"))
         cursor.execute("INSERT INTO users (username, role) VALUES (?, ?)", ("Mason", "Student"))
         cursor.execute("INSERT INTO users (username, role) VALUES (?, ?)", ("Ava", "Teacher"))
+        conn.commit()
+    cursor.execute("SELECT count(*) FROM scores")
+    if cursor.fetchone()[0] == 0:
+        random.seed(42)
+        start_date = datetime.date(2026, 3, 1)
+        end_date = datetime.date(2026, 4, 30)
+        days_range = (end_date - start_date).days
+        cursor.execute("SELECT id FROM users")
+        user_ids = [row[0] for row in cursor.fetchall()]
+        for uid in user_ids:
+            for i in range(10):
+                day_offset = int(days_range * i / 9)
+                jitter = random.randint(-3, 3)
+                actual_offset = max(0, min(days_range, day_offset + jitter))
+                test_date = start_date + datetime.timedelta(days=actual_offset)
+                hour = random.randint(8, 20)
+                minute = random.randint(0, 59)
+                ts = f"{test_date.isoformat()} {hour:02d}:{minute:02d}:00"
+                base_score = 70 + i * 2.8
+                score = base_score + random.uniform(-3, 5)
+                score = round(max(70, min(100, score)), 1)
+                cursor.execute(
+                    "INSERT INTO scores (user_id, score, test_date) VALUES (?, ?, ?)",
+                    (uid, score, ts))
         conn.commit()
     conn.close()
 
