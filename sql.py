@@ -16,19 +16,28 @@ def get_db_connection():
 def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL)')
+    cursor.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL, role TEXT DEFAULT "Student")')
     cursor.execute(
         'CREATE TABLE IF NOT EXISTS scores (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, score REAL, test_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
     cursor.execute("SELECT count(*) FROM users")
     if cursor.fetchone()[0] == 0:
-        cursor.execute("INSERT INTO users (username) VALUES (?)", ("Alex",))
-        cursor.execute("INSERT INTO users (username) VALUES (?)", ("Bob",))
-        cursor.execute("INSERT INTO users (username) VALUES (?)", ("Sophia",))
-        cursor.execute("INSERT INTO users (username) VALUES (?)", ("Isabella",))
-        cursor.execute("INSERT INTO users (username) VALUES (?)", ("Caroline",))
+        # 角色：Student, Teacher, Engineer, Technician, Researcher, Manager
+        cursor.execute("INSERT INTO users (username, role) VALUES (?, ?)", ("Alex", "Engineer"))
+        cursor.execute("INSERT INTO users (username, role) VALUES (?, ?)", ("Bob", "Technician"))
+        cursor.execute("INSERT INTO users (username, role) VALUES (?, ?)", ("Sophia", "Student"))
+        cursor.execute("INSERT INTO users (username, role) VALUES (?, ?)", ("Isabella", "Researcher"))
+        cursor.execute("INSERT INTO users (username, role) VALUES (?, ?)", ("Caroline", "Teacher"))
+        # 新增8人（4男4女）
+        cursor.execute("INSERT INTO users (username, role) VALUES (?, ?)", ("David", "Student"))
+        cursor.execute("INSERT INTO users (username, role) VALUES (?, ?)", ("Emma", "Student"))
+        cursor.execute("INSERT INTO users (username, role) VALUES (?, ?)", ("Felix", "Engineer"))
+        cursor.execute("INSERT INTO users (username, role) VALUES (?, ?)", ("Grace", "Technician"))
+        cursor.execute("INSERT INTO users (username, role) VALUES (?, ?)", ("Henry", "Manager"))
+        cursor.execute("INSERT INTO users (username, role) VALUES (?, ?)", ("Olivia", "Researcher"))
+        cursor.execute("INSERT INTO users (username, role) VALUES (?, ?)", ("Mason", "Student"))
+        cursor.execute("INSERT INTO users (username, role) VALUES (?, ?)", ("Ava", "Teacher"))
         conn.commit()
     conn.close()
-
 
 init_db()
 
@@ -120,7 +129,7 @@ questions = [
     {"q": "第 12 题：根据故障特征判断，该轴承发生了？",
         "options": ["正常", "内圈故障", "外圈故障", "滚动体故障"],
         "ans": 3,
-        "audio": "4.wav",
+        "audio":"4.wav",
         "img": "4.png",
         "analysis": "无规则随机冲击，是滚动体故障典型特征"},
     {"q": "第 13 题：在船舶强噪声环境下，该故障最易识别的特征是？",
